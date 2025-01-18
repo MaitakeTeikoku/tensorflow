@@ -7,6 +7,7 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const liveViewRef = useRef<HTMLDivElement | null>(null);
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
+  const [children, setChildren] = useState<HTMLElement[]>([]);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
 
@@ -45,15 +46,13 @@ const App: React.FC = () => {
 
   const predictWebcam = async () => {
     if (!model || !videoRef.current || !liveViewRef.current) return;
-  
+
     const predictions = await model.detect(videoRef.current);
-  
-    // Remove previous highlights before drawing new ones
-    const liveView = liveViewRef.current;
-    while (liveView.firstChild) {
-      liveView.removeChild(liveView.firstChild);
-    }
-  
+
+    // Remove previous highlights
+    children.forEach((child) => liveViewRef.current?.removeChild(child));
+    setChildren([]);
+
     // Draw new predictions
     predictions.forEach((prediction) => {
       if (prediction.score > 0.66) {
@@ -64,22 +63,22 @@ const App: React.FC = () => {
         p.style.marginLeft = `${prediction.bbox[0]}px`;
         p.style.marginTop = `${prediction.bbox[1] - 10}px`;
         p.style.width = `${prediction.bbox[2]}px`;
-  
+
         const highlighter = document.createElement("div");
         highlighter.className = "highlighter";
         highlighter.style.left = `${prediction.bbox[0]}px`;
         highlighter.style.top = `${prediction.bbox[1]}px`;
         highlighter.style.width = `${prediction.bbox[2]}px`;
         highlighter.style.height = `${prediction.bbox[3]}px`;
-  
-        liveView.appendChild(highlighter);
-        liveView.appendChild(p);
+
+        liveViewRef.current?.appendChild(highlighter);
+        liveViewRef.current?.appendChild(p);
+        setChildren((prev) => [...prev, highlighter, p]);
       }
     });
-  
+
     requestAnimationFrame(predictWebcam);
   };
-  
 
   return (
     <div>
