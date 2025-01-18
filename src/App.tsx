@@ -20,7 +20,7 @@ const App: React.FC = () => {
     const constraints = { video: true };
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     videoRef.current.srcObject = stream;
-    videoRef.current.addEventListener("loadeddata", predictWebcam);
+    //videoRef.current.addEventListener("loadeddata", predictWebcam);
   };
 
   const predictWebcam = async () => {
