@@ -110,7 +110,7 @@ const App: React.FC = () => {
 
   const Highlight: React.FC<{ prediction: Prediction }> = ({ prediction }) => {
     const [x, y, width, height] = prediction.bbox;
-    
+
     return (
       <div style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
         <div
@@ -149,39 +149,39 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <div style={{ position: 'relative', width: '640px', height: '480px' }}>
-        {devices.length > 0 && (
-          <select
-            value={selectedDevice}
-            onChange={(e) => setSelectedDevice(e.target.value)}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              left: '10px',
-              zIndex: 20,
-            }}
-          >
-            {devices.map((device) => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Camera ${device.deviceId}`}
-              </option>
-            ))}
-          </select>
-        )}
-        
-        <button
-          onClick={enableCam}
-          disabled={!mediaSupported}
+      {devices.length > 0 && (
+        <select
+          value={selectedDevice}
+          onChange={(e) => setSelectedDevice(e.target.value)}
           style={{
             position: 'absolute',
             top: '10px',
-            right: '10px',
+            left: '10px',
             zIndex: 20,
           }}
         >
-          Enable Webcam
-        </button>
+          {devices.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Camera ${device.deviceId}`}
+            </option>
+          ))}
+        </select>
+      )}
 
+      <button
+        onClick={enableCam}
+        disabled={!mediaSupported}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: 20,
+        }}
+      >
+        Enable Webcam
+      </button>
+
+      <div style={{ position: 'relative', width: '640px', height: '480px' }}>
         <video
           ref={videoRef}
           autoPlay
@@ -199,7 +199,7 @@ const App: React.FC = () => {
           onLoadedData={handleVideoReady}
           onLoadedMetadata={handleVideoReady}
         />
-        
+
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
           {isVideoReady && predictions.map((prediction, index) => (
             <Highlight key={`${prediction.class}-${index}`} prediction={prediction} />
