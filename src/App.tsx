@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs";
+import "./App.css";
 
 const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -80,7 +81,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div>
+    <section id="demos" className="invisible">
       <div ref={liveViewRef} className="camView">
         {devices.length > 0 && (
           <select
@@ -99,11 +100,9 @@ const App: React.FC = () => {
           Enable Webcam
         </button>
 
-
-
         <video ref={videoRef} autoPlay muted width="640" height="480"></video>
       </div>
-    </div>
+    </section>
   );
 };
 
