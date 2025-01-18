@@ -82,26 +82,24 @@ const App: React.FC = () => {
   return (
     <div>
       <div ref={liveViewRef} className="camView">
+        {devices.length > 0 && (
+          <select
+            id="cameraSelect"
+            value={selectedDevice}
+            onChange={(e) => setSelectedDevice(e.target.value)}
+          >
+            {devices.map((device) => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${device.deviceId}`}
+              </option>
+            ))}
+          </select>
+        )}
         <button onClick={enableCam} disabled={!mediaSupported}>
           Enable Webcam
         </button>
 
-        {devices.length > 0 && (
-          <div>
-            <label htmlFor="cameraSelect">Select Camera: </label>
-            <select
-              id="cameraSelect"
-              value={selectedDevice}
-              onChange={(e) => setSelectedDevice(e.target.value)}
-            >
-              {devices.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || `Camera ${device.deviceId}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+
 
         <video ref={videoRef} autoPlay muted width="640" height="480"></video>
       </div>
