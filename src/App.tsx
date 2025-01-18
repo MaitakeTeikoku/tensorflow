@@ -152,7 +152,7 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <div style={{ position: 'relative', width: '640px', height: '480px' }}>
-        {showControls && devices.length > 0 && (  // showControlsの条件を追加
+        {showControls && devices.length > 0 && (
           <select
             value={selectedDevice}
             onChange={(e) => setSelectedDevice(e.target.value)}
@@ -171,7 +171,7 @@ const App: React.FC = () => {
           </select>
         )}
         
-        {showControls && (  // showControlsの条件を追加
+        {showControls && (
           <button
             onClick={enableCam}
             disabled={!mediaSupported}
