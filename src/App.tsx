@@ -81,7 +81,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <section id="demos" className="invisible">
+    <div>
       <div ref={liveViewRef} className="camView">
         {devices.length > 0 && (
           <select
@@ -102,7 +102,7 @@ const App: React.FC = () => {
 
         <video ref={videoRef} autoPlay muted width="640" height="480"></video>
       </div>
-    </section>
+    </div>
   );
 };
 
