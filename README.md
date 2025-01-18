@@ -21,6 +21,8 @@
     ```
     ```sh: ターミナル
     npm i --save-dev @types/node
+    npm install @tensorflow/tfjs
+    npm install @tensorflow-models/coco-ssd
     ```
 1. ローカルで起動。
     ```sh: ターミナル
@@ -34,3 +36,61 @@
     ```sh: ターミナル
     npm run git
     ```
+1. クリーンアップ。
+    - 以下を削除。
+        - src/assets
+        - src/index.css
+        - src/App.css
+        - public/vite.svg
+    - publicにfavicon.icoをアップロード。
+    - src/App.tsxを以下に変更。
+        ```tsx
+        function App() {
+
+          return (
+            <>
+            </>
+          )
+        }
+
+        export default App
+        ```
+    - index.htmlを以下に変更。（`lang="ja"`、`link  href="/favicon.ico"`、`<title></title>`）
+        ```html
+        <!doctype html>
+        <html lang="ja">
+          <head>
+            <meta charset="UTF-8" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>TensorFlow</title>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="module" src="/src/main.tsx"></script>
+          </body>
+        </html>
+        ```
+    - vite.config.jsのdefineConfig内を以下に変更。（`server: { host: true },`を追記。）
+        ```ts
+        import { defineConfig } from "vite"
+        import react from '@vitejs/plugin-react-swc'
+
+        // https://vite.dev/config/
+        export default defineConfig({
+          plugins: [react()],
+          server: { host: true },
+        })
+        ```
+    - main.tsxを以下に変更。
+        ```tsx
+        import { StrictMode } from 'react'
+        import { createRoot } from 'react-dom/client'
+        import App from './App.tsx'
+
+        createRoot(document.getElementById('root')!).render(
+          <StrictMode>
+              <App />
+          </StrictMode>
+        )
+        ```
