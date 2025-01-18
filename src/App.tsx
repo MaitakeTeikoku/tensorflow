@@ -6,7 +6,6 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const liveViewRef = useRef<HTMLDivElement | null>(null);
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
-  const [children, setChildren] = useState<HTMLElement[]>([]);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
 
@@ -51,11 +50,12 @@ const App: React.FC = () => {
   const predictWebcam = async () => {
     if (!model || !videoRef.current || !liveViewRef.current) return;
 
-    const predictions = await model.detect(videoRef.current);
+    // Clear previous highlights
+    while (liveViewRef.current.firstChild) {
+      liveViewRef.current.removeChild(liveViewRef.current.firstChild);
+    }
 
-    // Remove previous highlights
-    children.forEach((child) => liveViewRef.current?.removeChild(child));
-    setChildren([]);
+    const predictions = await model.detect(videoRef.current);
 
     // Draw new predictions
     predictions.forEach((prediction) => {
@@ -77,10 +77,10 @@ const App: React.FC = () => {
 
         liveViewRef.current?.appendChild(highlighter);
         liveViewRef.current?.appendChild(p);
-        setChildren((prev) => [...prev, highlighter, p]);
       }
     });
 
+    // Request next frame
     requestAnimationFrame(predictWebcam);
   };
 
