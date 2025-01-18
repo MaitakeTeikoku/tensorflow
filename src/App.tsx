@@ -7,7 +7,6 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const liveViewRef = useRef<HTMLDivElement | null>(null);
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
-  const [children, setChildren] = useState<HTMLElement[]>([]);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
 
