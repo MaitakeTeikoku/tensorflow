@@ -41,7 +41,6 @@ const App: React.FC = () => {
   const enableCam = async () => {
     if (!model || !videoRef.current || !selectedDevice) return;
 
-    // Reset states when enabling camera
     setIsWebcamActive(false);
     setIsVideoReady(false);
     setPredictions([]);
@@ -73,7 +72,6 @@ const App: React.FC = () => {
       if (!model || !videoRef.current || !isWebcamActive || !isVideoReady) return;
 
       try {
-        // Check if video dimensions are valid
         if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
           console.log("Video dimensions not ready yet");
           animationFrameId = requestAnimationFrame(predictWebcam);
@@ -93,7 +91,6 @@ const App: React.FC = () => {
         animationFrameId = requestAnimationFrame(predictWebcam);
       } catch (error) {
         console.error("Error during prediction:", error);
-        // Add a small delay before trying again
         setTimeout(() => {
           animationFrameId = requestAnimationFrame(predictWebcam);
         }, 1000);
@@ -115,47 +112,54 @@ const App: React.FC = () => {
     const [x, y, width, height] = prediction.bbox;
     
     return (
-      <>
-        <p
+      <div style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
+        <div
           style={{
-            marginLeft: x,
-            marginTop: y - 10,
-            width,
-            position: "absolute",
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            padding: "4px 8px",
-            borderRadius: "4px",
-            fontSize: "14px",
+            position: 'absolute',
+            left: `${x}px`,
+            top: `${y - 22}px`, // 位置を少し上に調整
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            color: '#000',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            zIndex: 10,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            border: '1px solid rgba(0,0,0,0.1)',
           }}
         >
-          {prediction.class} - with {Math.round(prediction.score * 100)}% confidence
-        </p>
+          {prediction.class} - {Math.round(prediction.score * 100)}%
+        </div>
         <div
-          className="highlighter"
           style={{
-            left: x,
-            top: y,
-            width,
-            height,
-            position: "absolute",
-            border: "2px solid #ff0000",
-            backgroundColor: "rgba(255, 0, 0, 0.1)",
-            zIndex: 1,
+            position: 'absolute',
+            left: `${x}px`,
+            top: `${y}px`,
+            width: `${width}px`,
+            height: `${height}px`,
+            border: '2px solid #ff0000',
+            backgroundColor: 'rgba(255, 0, 0, 0.1)',
+            zIndex: 5,
           }}
         />
-      </>
+      </div>
     );
   };
 
   return (
     <div className="container">
-      <div className="camView" style={{ position: "relative" }}>
+      <div style={{ position: 'relative', width: '640px', height: '480px' }}>
         {devices.length > 0 && (
           <select
-            id="cameraSelect"
             value={selectedDevice}
             onChange={(e) => setSelectedDevice(e.target.value)}
-            className="camera-select"
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              zIndex: 20,
+            }}
           >
             {devices.map((device) => (
               <option key={device.deviceId} value={device.deviceId}>
@@ -164,10 +168,16 @@ const App: React.FC = () => {
             ))}
           </select>
         )}
+        
         <button
           onClick={enableCam}
           disabled={!mediaSupported}
-          className="enable-button"
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 20,
+          }}
         >
           Enable Webcam
         </button>
@@ -179,13 +189,22 @@ const App: React.FC = () => {
           muted
           width="640"
           height="480"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
           onLoadedData={handleVideoReady}
           onLoadedMetadata={handleVideoReady}
         />
         
-        {isVideoReady && predictions.map((prediction, index) => (
-          <Highlight key={`${prediction.class}-${index}`} prediction={prediction} />
-        ))}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+          {isVideoReady && predictions.map((prediction, index) => (
+            <Highlight key={`${prediction.class}-${index}`} prediction={prediction} />
+          ))}
+        </div>
       </div>
     </div>
   );
