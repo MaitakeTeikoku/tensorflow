@@ -14,32 +14,22 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Load the COCO-SSD model
-    cocoSsd.load().then((loadedModel) => {
-      setModel(loadedModel);
-    });
-
-    // Get available cameras
+    cocoSsd.load().then(setModel);
     if (mediaSupported) {
       navigator.mediaDevices.enumerateDevices().then((devices) => {
         const videoDevices = devices.filter((device) => device.kind === "videoinput");
         setCameras(videoDevices);
-        if (videoDevices.length > 0) {
-          setSelectedCamera(videoDevices[0].deviceId);
-        }
+        if (videoDevices.length > 0) setSelectedCamera(videoDevices[0].deviceId);
       });
     }
   }, [mediaSupported]);
 
   const enableCam = async () => {
     if (!model || !videoRef.current || !selectedCamera) return;
-
-    const constraints: MediaStreamConstraints = {
-      video: { deviceId: selectedCamera ? { exact: selectedCamera } : undefined },
-    };
-
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: selectedCamera } },
+      });
       videoRef.current.srcObject = stream;
       videoRef.current.addEventListener("loadeddata", predictWebcam);
     } catch (error) {
@@ -49,21 +39,17 @@ const App: React.FC = () => {
 
   const predictWebcam = async () => {
     if (!model || !videoRef.current || !liveViewRef.current) return;
+    const predictions = await model.detect(videoRef.current);
 
-    // Clear previous highlights
+    // Remove previous highlights
     while (liveViewRef.current.firstChild) {
       liveViewRef.current.removeChild(liveViewRef.current.firstChild);
     }
 
-    const predictions = await model.detect(videoRef.current);
-
-    // Draw new predictions
     predictions.forEach((prediction) => {
       if (prediction.score > 0.66) {
         const p = document.createElement("p");
-        p.innerText = `${prediction.class} - with ${Math.round(
-          prediction.score * 100
-        )}% confidence.`;
+        p.innerText = `${prediction.class} - ${Math.round(prediction.score * 100)}% confidence.`;
         p.style.marginLeft = `${prediction.bbox[0]}px`;
         p.style.marginTop = `${prediction.bbox[1] - 10}px`;
         p.style.width = `${prediction.bbox[2]}px`;
@@ -80,7 +66,6 @@ const App: React.FC = () => {
       }
     });
 
-    // Request next frame
     requestAnimationFrame(predictWebcam);
   };
 
@@ -88,10 +73,7 @@ const App: React.FC = () => {
     <div>
       <div ref={liveViewRef} className="camView">
         {cameras.length > 0 && (
-          <select
-            value={selectedCamera || ""}
-            onChange={(e) => setSelectedCamera(e.target.value)}
-          >
+          <select value={selectedCamera || ""} onChange={(e) => setSelectedCamera(e.target.value)}>
             {cameras.map((camera) => (
               <option key={camera.deviceId} value={camera.deviceId}>
                 {camera.label || `Camera ${camera.deviceId}`}
