@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const mediaSupported = useMemo(() => {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -40,6 +41,11 @@ const App: React.FC = () => {
   const enableCam = async () => {
     if (!model || !videoRef.current || !selectedDevice) return;
 
+    // Reset states when enabling camera
+    setIsWebcamActive(false);
+    setIsVideoReady(false);
+    setPredictions([]);
+
     const constraints = {
       video: { deviceId: selectedDevice ? { exact: selectedDevice } : undefined },
     };
@@ -47,9 +53,16 @@ const App: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
-      setIsWebcamActive(true);
+      videoRef.current.play();
     } catch (error) {
       console.error("Error accessing webcam:", error);
+    }
+  };
+
+  const handleVideoReady = () => {
+    if (videoRef.current?.videoWidth && videoRef.current?.videoHeight) {
+      setIsVideoReady(true);
+      setIsWebcamActive(true);
     }
   };
 
@@ -57,9 +70,16 @@ const App: React.FC = () => {
     let animationFrameId: number;
 
     const predictWebcam = async () => {
-      if (!model || !videoRef.current || !isWebcamActive) return;
+      if (!model || !videoRef.current || !isWebcamActive || !isVideoReady) return;
 
       try {
+        // Check if video dimensions are valid
+        if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+          console.log("Video dimensions not ready yet");
+          animationFrameId = requestAnimationFrame(predictWebcam);
+          return;
+        }
+
         const newPredictions = await model.detect(videoRef.current);
         setPredictions(
           newPredictions
@@ -73,10 +93,14 @@ const App: React.FC = () => {
         animationFrameId = requestAnimationFrame(predictWebcam);
       } catch (error) {
         console.error("Error during prediction:", error);
+        // Add a small delay before trying again
+        setTimeout(() => {
+          animationFrameId = requestAnimationFrame(predictWebcam);
+        }, 1000);
       }
     };
 
-    if (isWebcamActive) {
+    if (isWebcamActive && isVideoReady) {
       predictWebcam();
     }
 
@@ -85,7 +109,7 @@ const App: React.FC = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [model, isWebcamActive]);
+  }, [model, isWebcamActive, isVideoReady]);
 
   const Highlight: React.FC<{ prediction: Prediction }> = ({ prediction }) => {
     const [x, y, width, height] = prediction.bbox;
@@ -155,10 +179,11 @@ const App: React.FC = () => {
           muted
           width="640"
           height="480"
-          onLoadedData={() => setIsWebcamActive(true)}
+          onLoadedData={handleVideoReady}
+          onLoadedMetadata={handleVideoReady}
         />
         
-        {predictions.map((prediction, index) => (
+        {isVideoReady && predictions.map((prediction, index) => (
           <Highlight key={`${prediction.class}-${index}`} prediction={prediction} />
         ))}
       </div>
