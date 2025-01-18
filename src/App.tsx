@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs";
 
@@ -7,20 +7,45 @@ const App: React.FC = () => {
   const liveViewRef = useRef<HTMLDivElement | null>(null);
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
   const [children, setChildren] = useState<HTMLElement[]>([]);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
+
+  const mediaSupported = useMemo(() => {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }, []);
 
   useEffect(() => {
+    // Load the COCO-SSD model
     cocoSsd.load().then((loadedModel) => {
       setModel(loadedModel);
     });
-  }, []);
+
+    // Get available cameras
+    if (mediaSupported) {
+      navigator.mediaDevices.enumerateDevices().then((devices) => {
+        const videoDevices = devices.filter((device) => device.kind === "videoinput");
+        setCameras(videoDevices);
+        if (videoDevices.length > 0) {
+          setSelectedCamera(videoDevices[0].deviceId);
+        }
+      });
+    }
+  }, [mediaSupported]);
 
   const enableCam = async () => {
-    if (!model || !videoRef.current) return;
+    if (!model || !videoRef.current || !selectedCamera) return;
 
-    const constraints = { video: true };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    videoRef.current.srcObject = stream;
-    //videoRef.current.addEventListener("loadeddata", predictWebcam);
+    const constraints: MediaStreamConstraints = {
+      video: { deviceId: selectedCamera ? { exact: selectedCamera } : undefined },
+    };
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoRef.current.srcObject = stream;
+      videoRef.current.addEventListener("loadeddata", predictWebcam);
+    } catch (error) {
+      console.error("Error accessing the camera:", error);
+    }
   };
 
   const predictWebcam = async () => {
@@ -61,10 +86,22 @@ const App: React.FC = () => {
 
   return (
     <div>
-      <h1>Object Detection with TensorFlow.js</h1>
-      <p>Enable the webcam and hold objects in front of it for detection.</p>
       <div ref={liveViewRef} className="camView">
-        <button onClick={enableCam}>Enable Webcam</button>
+        {cameras.length > 0 && (
+          <select
+            value={selectedCamera || ""}
+            onChange={(e) => setSelectedCamera(e.target.value)}
+          >
+            {cameras.map((camera) => (
+              <option key={camera.deviceId} value={camera.deviceId}>
+                {camera.label || `Camera ${camera.deviceId}`}
+              </option>
+            ))}
+          </select>
+        )}
+        <button onClick={enableCam} disabled={!mediaSupported || !selectedCamera}>
+          Enable Webcam
+        </button>
         <video ref={videoRef} autoPlay muted width="640" height="480"></video>
       </div>
     </div>
