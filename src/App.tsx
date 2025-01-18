@@ -7,8 +7,10 @@ const App: React.FC = () => {
   const liveViewRef = useRef<HTMLDivElement | null>(null);
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
   const [children, setChildren] = useState<HTMLElement[]>([]);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string>("");
 
-  const mediaSupported = useMemo (() => {
+  const mediaSupported = useMemo(() => {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   }, []);
 
@@ -16,12 +18,26 @@ const App: React.FC = () => {
     cocoSsd.load().then((loadedModel) => {
       setModel(loadedModel);
     });
+
+    // Get available devices and filter out video devices (cameras)
+    navigator.mediaDevices.enumerateDevices().then((deviceList) => {
+      const videoDevices = deviceList.filter(
+        (device) => device.kind === "videoinput"
+      );
+      setDevices(videoDevices);
+      if (videoDevices.length > 0) {
+        setSelectedDevice(videoDevices[0].deviceId); // Default to the first camera
+      }
+    });
   }, []);
 
   const enableCam = async () => {
-    if (!model || !videoRef.current) return;
+    if (!model || !videoRef.current || !selectedDevice) return;
 
-    const constraints = { video: true };
+    const constraints = {
+      video: { deviceId: selectedDevice ? { exact: selectedDevice } : undefined },
+    };
+
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     videoRef.current.srcObject = stream;
     videoRef.current.addEventListener("loadeddata", predictWebcam);
@@ -66,7 +82,27 @@ const App: React.FC = () => {
   return (
     <div>
       <div ref={liveViewRef} className="camView">
-        <button onClick={enableCam} disabled={!mediaSupported}>Enable Webcam</button>
+        <button onClick={enableCam} disabled={!mediaSupported}>
+          Enable Webcam
+        </button>
+
+        {devices.length > 0 && (
+          <div>
+            <label htmlFor="cameraSelect">Select Camera: </label>
+            <select
+              id="cameraSelect"
+              value={selectedDevice}
+              onChange={(e) => setSelectedDevice(e.target.value)}
+            >
+              {devices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${device.deviceId}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <video ref={videoRef} autoPlay muted width="640" height="480"></video>
       </div>
     </div>
